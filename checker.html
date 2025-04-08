@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcadia Airdrop Kontrol</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #5a3e8d; /* Arcadia benzeri bir renk */
+            text-align: center;
+        }
+        textarea {
+            width: 95%;
+            min-height: 150px;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            background-color: #5a3e8d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #442c6e;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #results, #summary {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9e4f0;
+            border-radius: 5px;
+        }
+        #results ul {
+            list-style: none;
+            padding: 0;
+        }
+        #results li {
+            padding: 8px 0;
+            border-bottom: 1px dashed #ccc;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap; /* Küçük ekranlar için */
+        }
+         #results li:last-child {
+            border-bottom: none;
+        }
+        .address {
+            font-family: monospace;
+            word-break: break-all; /* Uzun adreslerin taşmasını önle */
+            margin-right: 10px; /* Miktar ile arasında boşluk */
+        }
+        .amount {
+            font-weight: bold;
+            color: #2a8a2a; /* Yeşil renk */
+            white-space: nowrap; /* Miktarın tek satırda kalmasını sağla */
+        }
+         .error {
+            color: #d9534f; /* Kırmızı renk */
+            font-weight: bold;
+        }
+        #loading {
+            text-align: center;
+            margin-top: 15px;
+            font-style: italic;
+            color: #555;
+            display: none; /* Başlangıçta gizli */
+        }
+        #total-amount {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Arcadia Airdrop Kontrol Aracı</h1>
+        <p>Lütfen kontrol etmek istediğiniz cüzdan adreslerini her satıra bir tane olacak şekilde aşağıdaki alana yapıştırın.</p>
+
+        <label for="addresses">Cüzdan Adresleri:</label>
+        <textarea id="addresses" placeholder="0xabc...123
+0xdef...456
+..."></textarea>
+
+        <button id="checkButton">Airdrop Miktarlarını Kontrol Et</button>
+
+        <div id="loading">Kontrol ediliyor, lütfen bekleyin...</div>
+
+        <div id="summary" style="display: none;">
+            <h2>Özet</h2>
+            <p>Toplam Alınan Airdrop Miktarı: <span id="total-amount">0</span> ARCD</p>
+            <p>Kontrol Edilen Geçerli Adres Sayısı: <span id="checked-count">0</span></p>
+            <p>Hata Alınan Adres Sayısı: <span id="error-count">0</span></p>
+        </div>
+
+        <div id="results" style="display: none;">
+            <h2>Sonuçlar</h2>
+            <ul id="result-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        const addressesTextArea = document.getElementById('addresses');
+        const checkButton = document.getElementById('checkButton');
+        const resultsDiv = document.getElementById('results');
+        const resultList = document.getElementById('result-list');
+        const summaryDiv = document.getElementById('summary');
+        const totalAmountSpan = document.getElementById('total-amount');
+        const checkedCountSpan = document.getElementById('checked-count');
+        const errorCountSpan = document.getElementById('error-count');
+        const loadingDiv = document.getElementById('loading');
+
+        // API URL'si (sadece adres kısmı değişecek)
+        const API_BASE_URL = 'https://api.arcadia.finance/v1/api/airdrop/user?user_address=';
+        // Büyük sayıyı okunabilir formata çevirmek için bölen (10^18)
+        // JavaScript'te büyük sayılarla güvenli işlem için BigInt kullanıyoruz
+        const DIVISOR = 10n ** 18n; // 1 ve ardından 18 sıfır (BigInt olarak)
+
+        checkButton.addEventListener('click', async () => {
+            const inputText = addressesTextArea.value.trim();
+            if (!inputText) {
+                alert("Lütfen en az bir cüzdan adresi girin.");
+                return;
+            }
+
+            const addresses = inputText.split('\n') // Satırlara göre ayır
+                                    .map(addr => addr.trim()) // Başındaki/sonundaki boşlukları temizle
+                                    .filter(addr => addr.length > 0 && addr.startsWith('0x')); // Boş satırları ve geçersiz formatları filtrele
+
+            if (addresses.length === 0) {
+                alert("Geçerli formatta (0x ile başlayan) cüzdan adresi bulunamadı.");
+                return;
+            }
+
+            // Butonu devre dışı bırak ve yükleniyor göstergesini aktif et
+            checkButton.disabled = true;
+            loadingDiv.style.display = 'block';
+            resultsDiv.style.display = 'none'; // Önceki sonuçları gizle
+            summaryDiv.style.display = 'none'; // Önceki özeti gizle
+            resultList.innerHTML = ''; // Liste içeriğini temizle
+            totalAmountSpan.textContent = '0';
+            checkedCountSpan.textContent = '0';
+            errorCountSpan.textContent = '0';
+
+            let totalAmountBigInt = 0n; // Toplam miktarı BigInt olarak tut
+            let checkedCount = 0;
+            let errorCount = 0;
+
+            // Adresleri paralel olarak sorgulamak için Promise.allSettled kullanıyoruz
+            // Bu sayede bir adres hata verse bile diğerleri çalışmaya devam eder
+            const promises = addresses.map(address => checkAirdrop(address));
+            const results = await Promise.allSettled(promises);
+
+            results.forEach(result => {
+                const li = document.createElement('li');
+                if (result.status === 'fulfilled') {
+                    const { address, amount, displayAmount } = result.value;
+                    li.innerHTML = `<span class="address">${address}</span> <span class="amount">${displayAmount} ARCD</span>`;
+                    totalAmountBigInt += amount; // BigInt toplama
+                    checkedCount++;
+                } else {
+                    // Hata durumu
+                    const { address, error } = result.reason;
+                    li.innerHTML = `<span class="address">${address}</span> <span class="error">Hata: ${error}</span>`;
+                    errorCount++;
+                    console.error(`Adres ${address} için hata:`, result.reason.details || error);
+                }
+                resultList.appendChild(li);
+            });
+
+            // Toplam miktarı formatla
+            const totalDisplayAmount = formatBigIntAmount(totalAmountBigInt);
+
+            // Sonuçları ve özeti göster
+            totalAmountSpan.textContent = totalDisplayAmount;
+            checkedCountSpan.textContent = checkedCount;
+            errorCountSpan.textContent = errorCount;
+
+            resultsDiv.style.display = 'block';
+            summaryDiv.style.display = 'block';
+            loadingDiv.style.display = 'none'; // Yükleniyor göstergesini gizle
+            checkButton.disabled = false; // Butonu tekrar aktif et
+        });
+
+        // Belirli bir adres için API'yi sorgulayan fonksiyon
+                // Belirli bir adres için API'yi sorgulayan fonksiyon (GÜNCELLENDİ)
+                async function checkAirdrop(address) {
+            const url = `${API_BASE_URL}${address}`;
+            try {
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                     let errorMsg = `HTTP Hatası: ${response.status}`;
+                     try {
+                         // Hata durumunda da JSON yanıtı olabilir mi diye bakalım
+                         const errorData = await response.json();
+                         errorMsg += ` - ${errorData.message || JSON.stringify(errorData)}`;
+                     } catch (e) { /* JSON parse edilemezse sadece status code kalsın */ }
+                    throw new Error(errorMsg);
+                }
+
+                const data = await response.json();
+                console.log(`API Yanıtı (${address}):`, data); // Yanıtı görmek için konsola yazdır
+
+                // --- GÜNCELLENEN KONTROL ---
+                // 'amount' alanı var mı ve null/undefined değil mi diye bak
+                if (data && data.amount !== null && data.amount !== undefined) {
+                    try {
+                        // amount değeri sayı veya string olabilir, BigInt'e çevirmeyi dene
+                        const amountBigInt = BigInt(data.amount);
+
+                        // Eğer amount 0 ise (sayı veya string olarak) yine 0 göster
+                        if (amountBigInt === 0n) {
+                            return { address: address, amount: 0n, displayAmount: "0.00" };
+                        }
+
+                        // 0'dan büyükse formatla
+                        const displayAmount = formatBigIntAmount(amountBigInt);
+                        return { address: address, amount: amountBigInt, displayAmount: displayAmount };
+
+                    } catch (e) {
+                        // BigInt'e çevirme başarısız olursa (geçersiz format vb.)
+                        console.error(`Adres ${address} için 'amount' BigInt'e çevrilemedi:`, data.amount, e);
+                        throw new Error(`API yanıtındaki 'amount' (${data.amount}) geçerli bir sayıya çevrilemedi.`);
+                    }
+                } else if (data && (data.amount === null)) {
+                     // amount alanı açıkça null ise (veya yukarıdaki kontrolde undefined ise) 0 kabul et
+                     return { address: address, amount: 0n, displayAmount: "0.00" };
+                } else if (data && data.eligible === false && data.amount === undefined) {
+                    // Özel durum: Belki eligible:false dönüyor ve amount yok? Bunu da 0 kabul edelim.
+                    console.log(`Adres ${address} uygun değil (eligible: false) veya amount eksik.`);
+                    return { address: address, amount: 0n, displayAmount: "0.00" };
+                }
+                 else {
+                    // Yukarıdaki koşullara uymayan, 'amount' içermeyen veya beklenmedik format
+                    console.error("Beklenmeyen API yanıtı formatı:", data);
+                    throw new Error("API yanıtında geçerli bir 'amount' alanı bulunamadı veya format anlaşılamadı.");
+                }
+                // --- GÜNCELLENEN KONTROL SONU ---
+
+            } catch (error) {
+                console.error(`Adres ${address} sorgulanırken hata oluştu:`, error);
+                throw { address: address, error: error.message || "Bilinmeyen bir hata oluştu", details: error };
+            }
+        }
+
+        // BigInt miktarını formatlayan yardımcı fonksiyon (örneğin: 348528846752435000000n -> "348.53")
+     // BigInt miktarını formatlayan yardımcı fonksiyon (GÜNCELLENDİ - Tam sayıya YUVARLAR)
+     function formatBigIntAmount(bigIntValue) {
+            // DIVISOR hala 10n ** 18n olmalı (yukarıda tanımlı)
+
+            // Eğer gelen değer 0 ise, doğrudan "0" döndür
+            if (bigIntValue === 0n) {
+                return "0";
+            }
+
+            // Yuvarlama yapmak için: Değere bölenin (DIVISOR) yarısını ekleyip sonra böl.
+            // Bu işlem BigInt üzerinde tam sayı yuvarlaması yapar (0.5 ve üstü yukarı).
+            // Örnek: 560.98... token -> (56098...00n + 500...00n) / 1000...00n = 561n
+            // Örnek: 560.49... token -> (56049...00n + 500...00n) / 1000...00n = 560n
+            const halfDivisor = DIVISOR / 2n; // Bölenin yarısını hesapla (BigInt)
+            const roundedValueBigInt = (bigIntValue + halfDivisor) / DIVISOR; // Yuvarlanmış tam sayı değeri (BigInt)
+
+            // Sonucu string olarak döndür
+            return roundedValueBigInt.toString();} 
+
+    </script>
+</body>
+</html>
