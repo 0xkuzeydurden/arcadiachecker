@@ -183,15 +183,14 @@
                 const li = document.createElement('li');
                 if (result.status === 'fulfilled') {
                     const { address, amount, displayAmount } = result.value;
-                    li.innerHTML = `<span class="address">${address}</span> <span class="amount">${displayAmount} ARCD</span>`;
+                    appendResult(li, address, `${displayAmount} ARCD`, "amount");
                     totalAmountBigInt += amount; // BigInt toplama
                     checkedCount++;
                 } else {
                     // Hata durumu
                     const { address, error } = result.reason;
-                    li.innerHTML = `<span class="address">${address}</span> <span class="error">Hata: ${error}</span>`;
+                    appendResult(li, address, `Hata: ${error}`, "error");
                     errorCount++;
-                    console.error(`Adres ${address} için hata:`, result.reason.details || error);
                 }
                 resultList.appendChild(li);
             });
@@ -209,6 +208,19 @@
             loadingDiv.style.display = 'none'; // Yükleniyor göstergesini gizle
             checkButton.disabled = false; // Butonu tekrar aktif et
         });
+
+        // Adres ve API hata metnini HTML olarak yorumlamadan göster.
+        function appendResult(listItem, address, message, messageClass) {
+            const addressSpan = document.createElement('span');
+            addressSpan.className = 'address';
+            addressSpan.textContent = address;
+            const messageSpan = document.createElement('span');
+            messageSpan.className = messageClass;
+            messageSpan.textContent = message;
+            listItem.appendChild(addressSpan);
+            listItem.appendChild(document.createTextNode(' '));
+            listItem.appendChild(messageSpan);
+        }
 
         // Belirli bir adres için API'yi sorgulayan fonksiyon
                 // Belirli bir adres için API'yi sorgulayan fonksiyon (GÜNCELLENDİ)
@@ -228,7 +240,6 @@
                 }
 
                 const data = await response.json();
-                console.log(`API Yanıtı (${address}):`, data); // Yanıtı görmek için konsola yazdır
 
                 // --- GÜNCELLENEN KONTROL ---
                 // 'amount' alanı var mı ve null/undefined değil mi diye bak
@@ -248,7 +259,6 @@
 
                     } catch (e) {
                         // BigInt'e çevirme başarısız olursa (geçersiz format vb.)
-                        console.error(`Adres ${address} için 'amount' BigInt'e çevrilemedi:`, data.amount, e);
                         throw new Error(`API yanıtındaki 'amount' (${data.amount}) geçerli bir sayıya çevrilemedi.`);
                     }
                 } else if (data && (data.amount === null)) {
@@ -256,18 +266,15 @@
                      return { address: address, amount: 0n, displayAmount: "0.00" };
                 } else if (data && data.eligible === false && data.amount === undefined) {
                     // Özel durum: Belki eligible:false dönüyor ve amount yok? Bunu da 0 kabul edelim.
-                    console.log(`Adres ${address} uygun değil (eligible: false) veya amount eksik.`);
                     return { address: address, amount: 0n, displayAmount: "0.00" };
                 }
                  else {
                     // Yukarıdaki koşullara uymayan, 'amount' içermeyen veya beklenmedik format
-                    console.error("Beklenmeyen API yanıtı formatı:", data);
                     throw new Error("API yanıtında geçerli bir 'amount' alanı bulunamadı veya format anlaşılamadı.");
                 }
                 // --- GÜNCELLENEN KONTROL SONU ---
 
             } catch (error) {
-                console.error(`Adres ${address} sorgulanırken hata oluştu:`, error);
                 throw { address: address, error: error.message || "Bilinmeyen bir hata oluştu", details: error };
             }
         }
