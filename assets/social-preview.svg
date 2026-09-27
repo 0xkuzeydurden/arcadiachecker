@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">Arcadia Checker — project cover</title>
+  <desc id="desc">Wallet allocation checks. Batch addresses. Clear summaries. An abstract project cover by 0xkuzeydurden, not an application screenshot.</desc>
+  <defs>
+    <radialGradient id="glow" cx="82%" cy="44%" r="74%"><stop offset="0" stop-color="#3A2554" stop-opacity=".72"/><stop offset=".75" stop-color="#080E18" stop-opacity="0"/></radialGradient>
+    <linearGradient id="rule"><stop stop-color="#CFACFF" stop-opacity=".75"/><stop offset="1" stop-color="#CFACFF" stop-opacity="0"/></linearGradient>
+  </defs>
+  <rect width="1280" height="640" fill="#080E18"/>
+  <rect width="1280" height="640" fill="url(#glow)"/>
+  <g stroke="#D1E2FF" stroke-width="1" opacity=".035"><path d="M0 0V640"/><path d="M80 0V640"/><path d="M160 0V640"/><path d="M240 0V640"/><path d="M320 0V640"/><path d="M400 0V640"/><path d="M480 0V640"/><path d="M560 0V640"/><path d="M640 0V640"/><path d="M720 0V640"/><path d="M800 0V640"/><path d="M880 0V640"/><path d="M960 0V640"/><path d="M1040 0V640"/><path d="M1120 0V640"/><path d="M1200 0V640"/><path d="M1280 0V640"/><path d="M0 0H1280"/><path d="M0 80H1280"/><path d="M0 160H1280"/><path d="M0 240H1280"/><path d="M0 320H1280"/><path d="M0 400H1280"/><path d="M0 480H1280"/><path d="M0 560H1280"/><path d="M0 640H1280"/></g>
+  <path d="M810 120V483" stroke="#CFACFF" stroke-width="1" opacity=".13"/>
+  <rect x="82" y="118" width="90" height="3" rx="1.5" fill="#CFACFF"/>
+  <g font-family="DejaVu Sans, Arial, sans-serif" fill="#F5F8FD">
+    <text x="82" y="79" font-size="19" font-weight="600" letter-spacing=".1">0xkuzeydurden</text>
+    <text x="1200" y="79" text-anchor="end" font-size="13" font-weight="600" letter-spacing="2.4" fill="#CFACFF">ALLOCATION LOOKUPS</text>
+    <text x="78" y="226" font-size="86" font-weight="700" letter-spacing="-3.7">Arcadia</text><text x="78" y="322" font-size="86" font-weight="700" letter-spacing="-3.7">Checker</text>
+    <text x="82" y="394" font-size="25" fill="#CBD5E1">Wallet allocation checks.</text><text x="82" y="433" font-size="25" fill="#CBD5E1">Batch addresses. Clear summaries.</text>
+    <text x="82" y="482" font-size="12" font-weight="600" letter-spacing="1.55" fill="#CFACFF">BROWSER TOOL  /  ARCADIA AIRDROP</text>
+    <path d="M82 529H1200" stroke="url(#rule)" stroke-width="1"/>
+    <text x="82" y="578" font-size="17" font-weight="600" fill="#E1E8F0">arcadiachecker</text>
+    <text x="1200" y="578" text-anchor="end" font-size="12" letter-spacing="1.7" fill="#8392A5">PROJECT COVER</text>
+  </g>
+  <g transform="translate(1010 286)" fill="none" stroke="#CFACFF" stroke-linecap="round" stroke-linejoin="round"><circle cx="-20" cy="-20" r="96" stroke-width="2.8"/>
+        <circle cx="-20" cy="-20" r="119" stroke-width="1.5" opacity=".28"/>
+        <path d="M50 50L119 119" stroke-width="12"/>
+        <path d="M-72-53H15M-72-21H30M-72 11H-5" stroke-width="3" opacity=".6"/>
+        <path d="M0 27L20 47L59 4" stroke-width="5"/>
+        <circle cx="-88" cy="-53" r="3" fill="#CFACFF" stroke="none"/>
+        <circle cx="-88" cy="-21" r="3" fill="#CFACFF" stroke="none"/>
+        <circle cx="-88" cy="11" r="3" fill="#CFACFF" stroke="none"/></g>
+</svg>
